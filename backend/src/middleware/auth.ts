@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import jwt, { Secret } from "jsonwebtoken";
-import User from "../models/user";
 import { auth } from "express-oauth2-jwt-bearer";
-require('dotenv').config()
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import User from "../models/user";
 
 declare global {
   namespace Express {
@@ -15,7 +14,7 @@ declare global {
 
 export const jwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSUSER_BASE_URL,
+  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
   tokenSigningAlg: "RS256",
 });
 
@@ -26,7 +25,7 @@ export const jwtParse = async (
 ) => {
   const { authorization } = req.headers;
 
-  if (!authorization || !authorization.startsWith("Bearer")) {
+  if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.sendStatus(401);
   }
 
@@ -34,7 +33,7 @@ export const jwtParse = async (
   const token = authorization.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as Secret) as jwt.JwtPayload;
+    const decoded = jwt.decode(token) as jwt.JwtPayload;
     const auth0Id = decoded.sub;
 
     const user = await User.findOne({ auth0Id });
